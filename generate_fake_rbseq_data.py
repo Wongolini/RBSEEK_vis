@@ -97,7 +97,7 @@ for r in random_gene_k:
         f = increasing_relationship(c1,c2)
         f_list.append(f)
     dummy_mat[r] = f_list
-    #plt.plot(f_list)
+ 
 
 for r in random_gene_l:
     f_list = np.random.normal()
