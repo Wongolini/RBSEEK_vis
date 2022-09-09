@@ -1,4 +1,5 @@
 #%%
+from operator import index
 import sys
 import pandas as pd
 import numpy as np
@@ -92,6 +93,7 @@ class HandleExps(LoadData):
                                          'units2':units2_list,
                                          'set':set_numbers,
                                          'index':index_list,
+                                         'set_index':[s+index_list[i] for i,s in enumerate(set_numbers)]
                                          }
         self.meta_conditions = meta_conditions
         # add function to convert mM to M and other conc stuff
@@ -114,35 +116,54 @@ class Plotting():
         # cond = 1 or 2
         # quant is gene_count or fitness, ... [depends on file input]
         # 2d line plot of condition concentration vs gene abundance
-        
+        # need to fix if condition 1 because [0,0,0,0...,1,1,1,1...,2,2,2...]
+        conc1 = self.meta['concentration1']
+        conc2 = self.meta['concentration2']
+        sample = self.meta['set_index']
+        conc_pairs = np.array(list(zip(conc1,conc2,sample)),dtype=object)
+    
+        if cond_number == 1:
+            conc_pairs=conc_pairs[np.lexsort((conc_pairs[:,0], conc_pairs[:,1]))]
+            # track changes in column 2 of conc_pairs to make blocks
+            blocks_mark = set(conc_pairs[:,1])
+            block_index = [np.where(b==conc_pairs[:,1])[0] for b in blocks_mark]
+            plot_conc = np.sort(np.unique(conc_pairs[:,0]))
+
+
+        if cond_number == 2:
+            conc_pairs=conc_pairs[np.lexsort((conc_pairs[:,1], conc_pairs[:,0]))]
+            # track changes in column 1 of conc_pairs to make blocks
+            blocks_mark = set(conc_pairs[:,0])
+            block_index = [np.where(b==conc_pairs[:,0])[0] for b in blocks_mark]
+            plot_conc = np.sort(np.unique(conc_pairs[:,1]))
+            #print(block_index)
+
+
         condition_name = self.conditions[cond_number-1]
-        concentration = 'concentration{}'.format(cond_number)
-        print(condition_name)
+  
         # find columns to plot from meta
         units = self.meta['units{}'.format(cond_number)]
         xlab = '{} {}'.format(condition_name, units[0])
-        columns = []
         plt.figure(figsize=[10,10])
+        plt.title('{} vs {} Single Condition Visualization'.format(xlab,quant))
         plt.xlabel(xlab)
         plt.ylabel(quant)
-    
-        for set_num,index in zip(self.meta['set'],self.meta['index']):
-            sample = set_num+index
-            columns.append(sample)
-        self.to_plot_df = self.df[columns].transpose()
-        self.to_plot_df.columns = self.df['sysName']
-        self.to_plot_df['concentration'] = self.meta[concentration]
-        plot_matrix = self.to_plot_df.to_numpy()
+        for block in block_index:
+            columns = conc_pairs[block,2]
+            self.to_plot_df = self.df[columns].transpose()
+            self.to_plot_df.columns = self.df['sysName'] # choose a better gene name
+            plot_matrix = self.to_plot_df.to_numpy() # numpy plots faster
+            # plot matrix dims:
+                # rows are the index
+                # columns are the gene
+            for i,col in enumerate(self.to_plot_df.columns):
+                # at some point add a legend, label=col (gene name)
+                
+                plt.plot(plot_conc, plot_matrix[:,i],'o-',alpha=.02)
+                pass
 
-        # concentrations will repeat if plotting on one axis
-        single_conc = np.unique(self.meta[concentration])
-        repeats = len(single_conc)
-        repeats_list = [int(r*repeats) for r in range(len(single_conc)+1)]
-
-        for i,col in enumerate(self.to_plot_df.columns[:-1]):
-            for j in range(1,len(repeats_list)):
-                plt.plot(self.to_plot_df['concentration'][repeats_list[j-1]:repeats_list[j]], 
-                                        plot_matrix[repeats_list[j-1]:repeats_list[j],i],'o-',alpha=.5,linewidth=.2,label=col)
+        #plt.legend()
+        
         plt.show()
         plt.close()
        
@@ -158,12 +179,13 @@ GenesCounts = HandleGeneCounts(gene_counts_file)
 Experiments = HandleExps(exps_file) 
 
 genes_counts_df = GenesCounts.df 
-section = Experiments.meta_conditions[('Phosphate','Nitrate')]
-to_plot_df = genes_counts_df.iloc[section['exps_loci']]
-to_plot_df = to_plot_df.iloc[[x for x in range(len(to_plot_df)) if np.all(to_plot_df.iloc[:,4:].to_numpy()[x]!=0)]]
-P = Plotting(GenesCounts.df, ('Phosphate','Nitrate'), section)
-P.condition_gene(cond_number=2,quant='counts')
-
+conditions = ('Phosphate','Nitrate')
+section = Experiments.meta_conditions[conditions]
+plot_df = GenesCounts.df 
+#plot_df.iloc[:,4:] = np.log(plot_df.iloc[:,4:])
+P = Plotting(plot_df, conditions, section)
+P.condition_gene(cond_number=2,quant='gene counts')
+P.condition_gene(cond_number=1,quant='gene counts')
 '''
 Useful headers for exps file:
 SetName and Index for sample names

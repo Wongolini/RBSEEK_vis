@@ -47,25 +47,70 @@ gene_counts_dummy['comb'] = gene_counts_df['comb']
 # %%
 # create a relationship between some genes and phsophates
 # choose 10,000 random genes
-def stochastic_log_relationship(c1,c2):
+def stochastic_log_decay_nitrate(c1):
+    part1 = (np.random.normal(100000,1000))/(1+np.exp(-1/(c1+.01))) # decay from phosphate
+    return part1
 
-    p = np.random.choice([-1,1])*np.log(c1+.001)*np.random.normal(10,3) + np.exp(c2)*np.random.normal(30,3)/100
+def decreasing_relationship(c2):
+    p = (np.random.normal(60000,1000))/(1+np.exp(-1/(c2+.01))) 
     if p<0:
         p=np.random.normal(10,1)
-    return p
+    return p 
 
-random_gene_i = np.random.choice(range(len(gene_counts_dummy)), 1000, replace=False)
-dummy_mat = np.zeros((len(gene_counts_df),len(exps_dummy['Index'])))
+def increasing_relationship(c1,c2):
+    part1 = np.random.normal(10,1)*10*np.exp(c1)
+    part2 = np.random.normal(20,2)*c2
+    return part1+part2+np.random.normal(10000,1000)
+
+
+random_gene_i = np.random.choice(range(len(gene_counts_dummy)), 2500, replace=False)
+random_gene_j = np.random.choice(range(len(gene_counts_dummy)), 1500, replace=False)
+random_gene_k = np.random.choice(range(len(gene_counts_dummy)), 100, replace=False)
+random_gene_l = np.random.choice(range(len(gene_counts_dummy)), 100, replace=False)
+
+dummy_mat = np.ones((len(gene_counts_df),len(exps_dummy['Index'])))*np.random.normal(20000,100)
+
 for r in random_gene_i:
     f_list = []
     for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):
-        f = stochastic_log_relationship(c1,c2)
+        
+        f = stochastic_log_decay_nitrate(c1)
+        f_list.append(f)
+        #print(c1,c2,index,f)
+    dummy_mat[r] = f_list
 
+
+    
+
+for r in random_gene_j:
+    f_list = []
+    for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):
+        f = decreasing_relationship(c2)
+        f_list.append(f)
+        #print(c2,f,index)
+    dummy_mat[r] = f_list
+    
+
+for r in random_gene_k:
+    f_list = []
+    for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):
+        f = increasing_relationship(c1,c2)
         f_list.append(f)
     dummy_mat[r] = f_list
-        
+    #plt.plot(f_list)
+
+for r in random_gene_l:
+    f_list = np.random.normal()
+    for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):
+        f_list = np.random.normal(10000,1000,len(exps_dummy))
+    dummy_mat[r] = f_list
+
 #%%
 gene_counts_dummy.iloc[:,4:] = dummy_mat
 gene_counts_dummy.to_csv('gene_counts.tab',sep='\t',index=False)
 exps_dummy.to_csv('exps',sep='\t',index=False)
+
+# for the dummy data we should see two deterministic curves:
+    # ne exponentially increasing
+    # one exponentially decaying
 # %%
