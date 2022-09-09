@@ -14,8 +14,8 @@ phosphate = []
 nitrate = []
 for row in range(8):
     for col in range(12):
-        phosphate.append(row)
-        nitrate.append(col)
+        phosphate.append(row/76)
+        nitrate.append(col/72)
 
 units1 = ['mM']*96
 units2 = ['mM']*96 

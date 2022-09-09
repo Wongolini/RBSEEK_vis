@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import argparse as args
 import matplotlib.pyplot as plt 
-
+from mpl_toolkits.mplot3d import axes3d
 
 #%%
 class LoadData:
@@ -87,8 +87,10 @@ class HandleExps(LoadData):
 
 
             meta_conditions[tuple(c)] = {'exps_loci':loci_list,
+                                         'condition1':c1,
                                          'concentration1':concentration1,
                                          'units1':units1_list,
+                                         'condition2':c2,
                                          'concentration2':concentration2,
                                          'units2':units2_list,
                                          'set':set_numbers,
@@ -158,7 +160,6 @@ class Plotting():
                 # columns are the gene
             for i,col in enumerate(self.to_plot_df.columns):
                 # at some point add a legend, label=col (gene name)
-                
                 plt.plot(plot_conc, plot_matrix[:,i],'o-',alpha=.02)
                 pass
 
@@ -168,10 +169,75 @@ class Plotting():
         plt.close()
        
 
-    def condition1_condition2_gene():
+    def condition1_condition2_gene(self,gene):
         # 3d plot of condition1 vs condition2 vs gene abundance
-        pass 
+        conc1 = self.meta['concentration1']
+        conc2 = self.meta['concentration2']
+        sample = self.meta['set_index']
+        conc_pairs = np.array(list(zip(conc1,conc2,sample)),dtype=object)
 
+        fig = plt.figure(figsize=[10,10])
+        ax = fig.add_subplot(121, projection='3d')
+        gene_df_index = np.where(gene==self.df['sysName'])[0]
+        x = conc_pairs[:,0]
+        y = conc_pairs[:,1]
+        print(max(x),max(y))
+        top = self.df[conc_pairs[:,2]].iloc[gene_df_index].to_numpy()[0]
+ 
+        bottom = np.zeros((len(x)))
+        width=.002
+        depth=.002
+
+        ax.bar3d(x, y, bottom, width, depth, top, shade=True,alpha=.2)
+        ax.set_xlabel('{} {}'.format(self.meta['condition1'], self.meta['units1'][0]))
+        ax.set_ylabel('{} {}'.format(self.meta['condition2'], self.meta['units2'][0]))
+        
+
+    def wireframe(self,gene):
+        conc1 = self.meta['concentration1']
+        conc2 = self.meta['concentration2']
+        sample = self.meta['set_index']
+        conc_pairs = np.array(list(zip(conc1,conc2,sample)),dtype=object)
+        a = np.unique(np.sort(self.meta['concentration1'])) # len 8
+        b = np.unique(np.sort(self.meta['concentration2'])) # len 12
+        x,y = np.meshgrid(a,b) # x is shape (12,8)
+        # x--> conc1:
+            # [0 .013 .026 .039 ...]
+            # [0 .013 .026 .039 ...]
+        # y--> conc2
+            # [0  0  0  0  0]
+            # [.0138 .0138 .0138 .0138]
+        z = np.zeros((x.shape[0],x.shape[1]))
+    
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                find_z = np.intersect1d(np.where(x[i,j]==conc_pairs[:,0])[0],np.where(y[i,j]==conc_pairs[:,1])[0])[0]
+                sample = conc_pairs[find_z,2]
+                z[i,j] = self.df[sample].iloc[np.where(gene==self.df['sysName'])[0]]
+     
+        fig = plt.figure(figsize=[15,15])
+        wf = fig.add_subplot(projection ='3d')
+        wf.plot_wireframe(x, y, z, color ='green')
+        x = conc_pairs[:,0]
+        y = conc_pairs[:,1]
+        wf.set_xlabel(self.meta['condition1'])
+        wf.set_ylabel(self.meta['condition2'])
+
+        gene_df_index = np.where(gene==self.df['sysName'])[0]
+        x = conc_pairs[:,0]
+        y = conc_pairs[:,1]
+        top = self.df[conc_pairs[:,2]].iloc[gene_df_index].to_numpy()[0]
+ 
+        bottom = np.zeros((len(x)))
+        width=.002
+        depth=.002
+
+        wf.bar3d(x, y, bottom, width, depth, top, shade=True,alpha=.2)
+        wf.set_xlabel('{} {}'.format(self.meta['condition1'], self.meta['units1'][0]),fontsize=10)
+        wf.set_ylabel('{} {}'.format(self.meta['condition2'], self.meta['units2'][0]),fontsize=10)
+        wf.set_zlabel('Gene {} Abundance'.format(gene))
+        plt.show()
+        plt.close()
 
 gene_counts_file = 'gene_counts.tab'
 exps_file = 'exps'
@@ -185,7 +251,9 @@ plot_df = GenesCounts.df
 #plot_df.iloc[:,4:] = np.log(plot_df.iloc[:,4:])
 P = Plotting(plot_df, conditions, section)
 P.condition_gene(cond_number=2,quant='gene counts')
-P.condition_gene(cond_number=1,quant='gene counts')
+#P.condition_gene(cond_number=1,quant='gene counts')
+#P.condition1_condition2_gene('b0001')
+P.wireframe('b0001')
 '''
 Useful headers for exps file:
 SetName and Index for sample names
@@ -199,6 +267,8 @@ Note: When making the exps file, for SetName use the naming scheme:
         [Experiment_name]_[set_#]
 ^ the name will be fused with index [IT###]
 --> in gene_counts.tab the sample names become: [set{}IT### condition]
+# Assumption that you are running this program with a rbseq file of only a single 
+  96 well sequencing run
 '''
 
 
@@ -207,4 +277,16 @@ Note: When making the exps file, for SetName use the naming scheme:
 
 
 
+# %%
+a = range(8)
+b = range(12)
+
+x, y = np.meshgrid(a, b)
+print(x.shape)
+z=np.zeros((x.shape[0],x.shape[1]))
+for line in conc_pairs:
+    z[line[1],line[0]] = plot_df[line[2]].iloc[0]
+fig = plt.figure()
+wf = fig.add_subplot(projection ='3d')
+wf.plot_wireframe(x, y, z, color ='green')
 # %%
