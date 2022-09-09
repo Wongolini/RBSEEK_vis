@@ -217,28 +217,30 @@ class Plotting():
      
         fig = plt.figure(figsize=[15,15])
         wf = fig.add_subplot(projection ='3d')
-        wf.plot_wireframe(x, y, z, color ='green')
-        x = conc_pairs[:,0]
-        y = conc_pairs[:,1]
-        wf.set_xlabel(self.meta['condition1'])
-        wf.set_ylabel(self.meta['condition2'])
+        #wf.plot_wireframe(x, y, z, color ='blue')
+
+
 
         gene_df_index = np.where(gene==self.df['sysName'])[0]
-        x = conc_pairs[:,0]
-        y = conc_pairs[:,1]
+        x_ = conc_pairs[:,0]
+        y_ = conc_pairs[:,1]
         top = self.df[conc_pairs[:,2]].iloc[gene_df_index].to_numpy()[0]
  
-        bottom = np.zeros((len(x)))
-        width=.002
-        depth=.002
+        bottom = np.zeros((len(x_)))
+        width=.5
+        depth=.5
+        wf.set_title('3D wireframe barplot {} abundance \n dummy data'.format(gene))
+        wf.bar3d(x_, y_, bottom, width, depth, top, shade=True, alpha=.15,color='cyan')
+        wf.plot_wireframe(x, y, z, color ='blue')
 
-        wf.bar3d(x, y, bottom, width, depth, top, shade=True,alpha=.2)
+        wf.set_xlabel(self.meta['condition1'])
+        wf.set_ylabel(self.meta['condition2'])
         wf.set_xlabel('{} {}'.format(self.meta['condition1'], self.meta['units1'][0]),fontsize=10)
         wf.set_ylabel('{} {}'.format(self.meta['condition2'], self.meta['units2'][0]),fontsize=10)
         wf.set_zlabel('Gene {} Abundance'.format(gene))
         plt.show()
         plt.close()
-
+#%%
 gene_counts_file = 'gene_counts.tab'
 exps_file = 'exps'
 GenesCounts = HandleGeneCounts(gene_counts_file)
@@ -250,7 +252,7 @@ section = Experiments.meta_conditions[conditions]
 plot_df = GenesCounts.df 
 #plot_df.iloc[:,4:] = np.log(plot_df.iloc[:,4:])
 P = Plotting(plot_df, conditions, section)
-P.condition_gene(cond_number=2,quant='gene counts')
+#P.condition_gene(cond_number=2,quant='gene counts')
 #P.condition_gene(cond_number=1,quant='gene counts')
 #P.condition1_condition2_gene('b0001')
 P.wireframe('b0001')
@@ -275,18 +277,3 @@ Note: When making the exps file, for SetName use the naming scheme:
 #%%
 # exps file has information on the set names and experimental conditions
 
-
-
-# %%
-a = range(8)
-b = range(12)
-
-x, y = np.meshgrid(a, b)
-print(x.shape)
-z=np.zeros((x.shape[0],x.shape[1]))
-for line in conc_pairs:
-    z[line[1],line[0]] = plot_df[line[2]].iloc[0]
-fig = plt.figure()
-wf = fig.add_subplot(projection ='3d')
-wf.plot_wireframe(x, y, z, color ='green')
-# %%
