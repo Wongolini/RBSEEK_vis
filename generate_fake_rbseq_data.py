@@ -14,7 +14,7 @@ phosphate = []
 nitrate = []
 for row in range(8):
     for col in range(12):
-        phosphate.append(row)
+        phosphate.append(row*2)
         nitrate.append(col)
 
 units1 = ['mM']*96
@@ -59,28 +59,24 @@ def decreasing_relationship(c2):
 
 def increasing_relationship(c1,c2):
     part1 = np.random.normal(10,1)*10*np.exp(c1)
-    part2 = np.random.normal(20,2)*c2
-    return part1+part2+np.random.normal(10000,1000)
+    part2 = np.random.normal(10,1)*10*np.exp(c2)
+    return part1+part2
 
 
 random_gene_i = np.random.choice(range(len(gene_counts_dummy)), 2500, replace=False)
 random_gene_j = np.random.choice(range(len(gene_counts_dummy)), 1500, replace=False)
-random_gene_k = np.random.choice(range(len(gene_counts_dummy)), 100, replace=False)
+random_gene_k = np.random.choice(range(len(gene_counts_dummy)), 3000, replace=False)
 random_gene_l = np.random.choice(range(len(gene_counts_dummy)), 100, replace=False)
 
 dummy_mat = np.ones((len(gene_counts_df),len(exps_dummy['Index'])))*np.random.normal(20000,100)
-
+'''
 for r in random_gene_i:
     f_list = []
-    for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):
-        
+    for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):   
         f = stochastic_log_decay_nitrate(c1)
         f_list.append(f)
-        #print(c1,c2,index,f)
     dummy_mat[r] = f_list
 
-
-    
 
 for r in random_gene_j:
     f_list = []
@@ -89,7 +85,7 @@ for r in random_gene_j:
         f_list.append(f)
         #print(c2,f,index)
     dummy_mat[r] = f_list
-    
+'''
 
 for r in random_gene_k:
     f_list = []
@@ -97,15 +93,15 @@ for r in random_gene_k:
         f = increasing_relationship(c1,c2)
         f_list.append(f)
     dummy_mat[r] = f_list
- 
+''' 
 
 for r in random_gene_l:
     f_list = np.random.normal()
     for index,c1,c2 in zip(exps_dummy['Index'],exps_dummy['Concentration_1'],exps_dummy['Concentration_2']):
         f_list = np.random.normal(10000,1000,len(exps_dummy))
     dummy_mat[r] = f_list
+'''
 
-#%%
 gene_counts_dummy.iloc[:,4:] = dummy_mat
 gene_counts_dummy.to_csv('gene_counts.tab',sep='\t',index=False)
 exps_dummy.to_csv('exps',sep='\t',index=False)
