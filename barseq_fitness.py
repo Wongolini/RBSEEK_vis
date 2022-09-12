@@ -193,6 +193,7 @@ class Plotting():
         plt.show()
 
     def calculate_zmap(self,gene):
+        # change this to calculate (8,12) shape
         conc1 = self.meta['concentration1']
         conc2 = self.meta['concentration2']
         sample = self.meta['set_index']
@@ -200,6 +201,7 @@ class Plotting():
         a = np.unique(np.sort(self.meta['concentration1'])) # len 8
         b = np.unique(np.sort(self.meta['concentration2'])) # len 12
         x,y = np.meshgrid(a,b) # x is shape (12,8)
+        print(x.shape,y.shape)
         # x--> conc1:
             # [0 .013 .026 .039 ...]
             # [0 .013 .026 .039 ...]
@@ -218,7 +220,8 @@ class Plotting():
 
     def wireframe(self,gene):
         x,y,z = self.calculate_zmap(gene)
-
+        print(x.shape)
+        print(y.shape)
         # x--> conc1:
             # [0 .013 .026 .039 ...]
             # [0 .013 .026 .039 ...]
