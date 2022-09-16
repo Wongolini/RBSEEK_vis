@@ -114,6 +114,13 @@ class Plotting():
         self.df = df 
         self.conditions = conditions
         self.meta = meta_data
+        conc1 = self.meta['concentration1']
+        conc2 = self.meta['concentration2']
+        sample = self.meta['set_index']
+        conc_pairs = np.array(list(zip(conc1,conc2,sample)),dtype=object)
+        self.to_plot_df = self.df[conc_pairs[:,2]].transpose()
+        self.to_plot_df.columns = self.df['sysName'] # choose a better gene name
+           
         
     def condition_gene(self,cond_number,quant):
         # cond = 1 or 2
@@ -141,7 +148,6 @@ class Plotting():
             plot_conc = np.sort(np.unique(conc_pairs[:,1]))
             #print(block_index)
 
-
         condition_name = self.conditions[cond_number-1]
   
         # find columns to plot from meta
@@ -168,7 +174,12 @@ class Plotting():
         
         plt.show()
         plt.close()
-       
+    
+    def gene_isocline(self,gene):
+        plt.plot(self.to_plot_df[gene])
+        plt.show()
+        plt.close()
+
 
     def condition1_condition2_gene(self,gene):
         # 3d plot of condition1 vs condition2 vs gene abundance
@@ -291,6 +302,7 @@ condition1_mat, condition2_mat, z = P.calculate_zmap('b0001')
 P.condition1_condition2_gene('b0001')
 P.wireframe('b0001')
 P.heatmap_condition1_condition2_gene('b0001')
+P.gene_isocline('b0001')
 '''
 Useful headers for exps file:
 SetName and Index for sample names
